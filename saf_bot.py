@@ -1,7 +1,7 @@
 import os
 import streamlit as st
 import pandas as pd
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
@@ -13,10 +13,10 @@ from langchain.schema import Document
 # 🔐 Chave da OpenAI
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
-# 🧠 Carregar planilha como contexto do bot
+# 🔄 Carrega planilha e configura a cadeia com memória
 @st.cache_resource
 def carregar_chain_com_memoria():
-    df = pd.read_csv("data.csv", sep=";")
+    df = pd.read_csv("data.csv")
     texto_unico = "\n".join(df.astype(str).apply(lambda x: " | ".join(x), axis=1))
     document = Document(page_content=texto_unico)
 
@@ -56,22 +56,25 @@ Resposta:"""
 
     return chain
 
-# 🌱 Interface visual
+# ⚙️ Configuração visual
 st.set_page_config(page_title="Chatbot SAF Cristal 🌱", page_icon="🐝")
 st.title("🐝 Chatbot do SAF Cristal")
 st.markdown("Converse com o assistente sobre o Sistema Agroflorestal Cristal 📊")
 
-# Histórico visual
+# Inicializa o histórico visual (mensagens)
 if "mensagens" not in st.session_state:
     st.session_state.mensagens = []
 
+# Inicializa a cadeia com memória
 if "qa_chain" not in st.session_state:
     st.session_state.qa_chain = carregar_chain_com_memoria()
 
+# Exibição do histórico completo
 for remetente, mensagem in st.session_state.mensagens:
     with st.chat_message("user" if remetente == "🧑‍🌾" else "assistant", avatar=remetente):
         st.markdown(mensagem)
 
+# Campo de entrada sempre no fim
 user_input = st.chat_input("Digite sua pergunta aqui...")
 
 if user_input:
